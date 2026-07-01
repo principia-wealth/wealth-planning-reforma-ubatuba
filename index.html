@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulador de Decisão Patrimonial — Principia Wealth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{
+  --navy:#1B3A6B; --navy-dark:#142C52;
+  --bg:#F5F7FA; --card:#FFFFFF;
+  --text:#1A1A2E; --text-sec:#6B7280;
+  --green:#1A7A4A; --green-bg:#DCFCE7; --green-dark:#14532D;
+  --yellow:#D97706; --yellow-bg:#FEF3C7;
+  --orange:#C2410C; --orange-bg:#FFEDD5;
+  --red:#B91C1C; --red-bg:#FEE2E2;
+  --border:#E0E4EA;
+  --row-critical:#FEF2F2; --row-capex:#FFFBEB;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;font-size:14px;color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;}
+h1,h2,h3{margin:0;}
+p{margin:0;}
+input,button{font-family:inherit;}
+
+/* ===== HEADER ===== */
+header.app-header{background:var(--card);border-bottom:1px solid var(--border);padding:16px 28px;display:flex;align-items:center;gap:12px;}
+.logo-mark{flex-shrink:0;}
+.logo-text h1{font-size:17px;font-weight:600;color:var(--navy);letter-spacing:0.06em;}
+.logo-text .sub{font-size:11px;color:var(--text-sec);margin-top:2px;}
+.logo-text .credentials{font-size:11px;color:var(--text-sec);margin-top:4px;}
+.logo-text .credentials a{color:var(--navy);text-decoration:none;font-weight:500;}
+.logo-text .credentials a:hover{text-decoration:underline;}
+.header-spacer{flex:1;}
+.btn-print{background:var(--navy);color:#fff;border:none;padding:10px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;}
+.btn-print:hover{background:var(--navy-dark);}
+
+/* ===== TABS ===== */
+nav.tabs{display:flex;gap:4px;background:var(--card);border-bottom:1px solid var(--border);padding:0 28px;position:sticky;top:0;z-index:20;}
+.tab-btn{padding:14px 18px;font-size:14px;font-weight:500;color:var(--text-sec);border:none;background:none;border-bottom:3px solid transparent;cursor:pointer;}
+.tab-btn.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:600;}
+.tab-btn:hover{color:var(--navy);}
+
+main{padding:24px 28px 60px;max-width:1680px;margin:0 auto;}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* ===== RESUMO LAYOUT ===== */
+.resumo-grid{display:grid;grid-template-columns:42% 58%;gap:20px;align-items:start;}
+.col-inputs .panel:last-child{margin-bottom:0;}
+
+.panel{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:16px;}
+.panel h2{font-size:15px;font-weight:600;color:var(--navy);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+.panel h2 .num{display:inline-flex;width:20px;height:20px;border-radius:50%;background:var(--navy);color:#fff;font-size:11px;align-items:center;justify-content:center;flex-shrink:0;}
+
+.field{margin-bottom:13px;}
+.field:last-child{margin-bottom:0;}
+.field label{display:flex;align-items:center;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.045em;color:var(--text-sec);margin-bottom:5px;}
+.field input[type=text],.field input[type=number]{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;color:var(--text);background:#fff;}
+.field input:focus{outline:none;border-color:var(--navy);}
+.field-note{font-size:11.5px;color:var(--text-sec);margin-top:5px;line-height:1.4;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+.toggle-group{display:flex;gap:6px;}
+.toggle-btn{flex:1;padding:8px 10px;border:1px solid var(--border);background:#fff;border-radius:6px;font-size:12.5px;font-weight:500;cursor:pointer;color:var(--text-sec);text-align:center;transition:all .12s;}
+.toggle-btn.active{background:var(--navy);color:#fff;border-color:var(--navy);font-weight:600;}
+.toggle-btn:hover:not(.active){border-color:var(--navy);color:var(--navy);}
+
+.tooltip-icon{display:inline-flex;width:14px;height:14px;border-radius:50%;background:var(--border);color:var(--text-sec);font-size:10px;align-items:center;justify-content:center;margin-left:5px;cursor:help;position:relative;font-style:normal;font-weight:700;text-transform:none;}
+.tooltip-icon .tooltip-box{display:none;position:absolute;bottom:135%;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:9px 11px;border-radius:6px;font-size:11.5px;width:230px;z-index:30;font-weight:400;text-transform:none;letter-spacing:normal;line-height:1.4;}
+.tooltip-icon:hover .tooltip-box{display:block;}
+
+.dyn-table{width:100%;border-collapse:collapse;}
+.dyn-table td{padding:3px 0;vertical-align:middle;}
+.dyn-table td.desc-col{width:60%;padding-right:6px;}
+.dyn-table td.val-col{width:34%;}
+.dyn-table td.rm-col{width:6%;text-align:center;}
+.dyn-table input{width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;}
+.dyn-table .remove-btn{color:var(--red);cursor:pointer;background:none;border:none;font-size:17px;line-height:1;padding:0;}
+.dyn-total{display:flex;justify-content:space-between;font-weight:600;padding-top:8px;margin-top:6px;border-top:1px solid var(--border);font-size:13.5px;}
+.btn-add{background:none;border:1px dashed var(--border);color:var(--navy);padding:7px 12px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;width:100%;margin-top:8px;}
+.btn-add:hover{background:var(--bg);}
+.subsection-label{font-size:12px;font-weight:600;color:var(--text);margin:14px 0 6px;}
+.subsection-label-result{font-size:12.5px;font-weight:700;color:var(--navy);margin:18px 0 8px;text-transform:uppercase;letter-spacing:0.03em;}
+.subsection-label-result:first-child{margin-top:0;}
+.subsection-label:first-child{margin-top:0;}
+
+.slider-row{display:flex;align-items:center;gap:10px;}
+input[type=range]{flex:1;accent-color:var(--navy);}
+.slider-row input.slider-value-input{width:104px !important;flex-shrink:0;text-align:right;}
+.slider-row input[type=range]{flex:1;min-width:0;}
+.feedback-line{font-size:12.5px;color:var(--text-sec);background:var(--bg);padding:9px 12px;border-radius:6px;margin-top:10px;line-height:1.5;}
+.feedback-line b{color:var(--text);}
+
+/* ===== BANNER ===== */
+.banner{border-radius:10px;padding:20px 24px;color:#fff;margin-bottom:18px;}
+.banner.b-verde{background:linear-gradient(135deg,var(--green-dark),var(--green));}
+.banner.b-amarelo{background:linear-gradient(135deg,#92400E,var(--yellow));}
+.banner.b-laranja{background:linear-gradient(135deg,#7C2D12,var(--orange));}
+.banner.b-vermelho{background:linear-gradient(135deg,#7F1D1D,var(--red));}
+.banner-row{font-size:16px;font-weight:600;line-height:1.7;}
+.banner-row .v{font-size:21px;font-weight:700;}
+.banner-sub{font-size:12.5px;opacity:0.92;margin-top:10px;}
+
+/* ===== BLOCO A breakdown ===== */
+.breakdown-row{display:flex;justify-content:space-between;padding:7px 0;font-size:13.5px;border-bottom:1px dashed var(--border);}
+.breakdown-row .lbl{color:var(--text-sec);}
+.breakdown-row .val{font-weight:500;font-variant-numeric:tabular-nums;}
+.breakdown-row .val.negative{color:var(--red);}
+.breakdown-row.subtotal{font-weight:700;border-top:2px solid var(--text);border-bottom:none;padding-top:11px;margin-top:3px;font-size:14.5px;}
+.breakdown-row.subtotal .lbl{color:var(--text);}
+.breakdown-row.final{font-weight:700;border-top:2px solid var(--navy);padding-top:11px;margin-top:8px;font-size:15.5px;color:var(--navy);}
+
+/* ===== BLOCO B sustentabilidade ===== */
+.sust-table{width:100%;border-collapse:collapse;}
+.sust-table th,.sust-table td{padding:11px 8px;text-align:center;border:1px solid var(--border);font-size:13px;}
+.sust-table th{background:var(--bg);font-weight:600;color:var(--text-sec);text-transform:uppercase;font-size:10.5px;letter-spacing:0.03em;}
+.sust-table td.row-label{text-align:left;font-weight:600;background:var(--bg);}
+.sust-table .highlight-col{background:#EFF4FC;}
+.sust-table th.highlight-col{background:#DCE7F7;}
+.icon-ok{color:var(--green);font-weight:700;font-size:15px;}
+.icon-fail{color:var(--red);font-weight:700;font-size:15px;}
+.gap-text{display:block;font-size:11px;margin-top:3px;}
+.gap-deficit{color:var(--red);}
+.gap-surplus{color:var(--green);}
+.resgate-text{color:var(--text-sec);font-style:italic;}
+.highlight-col-possivel{background:#F0F5EC;}
+.cell-possivel{background:#F7FAF4;}
+.possivel-total{font-weight:700;font-size:14.5px;color:var(--green-dark);}
+.possivel-breakdown{font-size:10.5px;color:var(--text-sec);margin-top:4px;line-height:1.5;}
+
+/* ===== BLOCO C capex ===== */
+.capex-table{width:100%;border-collapse:collapse;margin-top:6px;}
+.capex-table th,.capex-table td{padding:10px 10px;text-align:right;border:1px solid var(--border);font-size:13.5px;}
+.capex-table th{background:var(--bg);font-weight:600;color:var(--text-sec);font-size:10.5px;text-transform:uppercase;text-align:right;}
+.capex-table th:first-child,.capex-table td:first-child{text-align:left;}
+.capex-table tr.obj-row td{background:#EFF4FC;font-weight:700;}
+.indicator-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:7px;}
+.indicator-dot.green{background:var(--green);}
+.indicator-dot.red{background:var(--red);}
+.capex-title-note{font-size:11.5px;color:var(--text-sec);margin-top:8px;line-height:1.4;}
+
+/* ===== BLOCO D cards ===== */
+.property-cards{display:flex;gap:12px;flex-wrap:wrap;}
+.property-card{flex:1;min-width:185px;border:1px solid var(--border);border-radius:8px;padding:14px;background:var(--bg);}
+.property-card h3{font-size:13px;font-weight:700;margin-bottom:3px;color:var(--text);}
+.property-card .loc{font-size:11px;color:var(--text-sec);margin-bottom:10px;}
+.property-card .row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;color:var(--text-sec);}
+.property-card .row b{color:var(--text);font-weight:600;}
+.property-card .yield-value{font-size:21px;font-weight:700;color:var(--navy);margin-top:8px;}
+.badge{display:inline-block;padding:3px 9px;border-radius:12px;font-size:10.5px;font-weight:700;margin-top:7px;}
+.badge.verde{background:var(--green-bg);color:var(--green);}
+.badge.amarelo{background:var(--yellow-bg);color:#92400E;}
+.badge.vermelho{background:var(--red-bg);color:var(--red);}
+
+/* ===== BLOCO E chart ===== */
+.chart-container{position:relative;height:300px;}
+.chart-legend-note{font-size:11.5px;color:var(--text-sec);margin-top:10px;text-align:center;}
+.exhaustion-alert{background:var(--row-critical);border:1px solid var(--red);border-radius:8px;padding:11px 14px;font-size:13px;color:var(--red);margin-top:12px;font-weight:500;}
+
+/* ===== ANUAL / MENSAL TABS ===== */
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;flex-wrap:wrap;}
+.toolbar-group{display:flex;align-items:center;gap:10px;}
+.toolbar label{font-size:12px;font-weight:600;color:var(--text-sec);text-transform:uppercase;letter-spacing:0.03em;}
+.toolbar select{padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;}
+.checkbox-row{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-sec);}
+.top-note{font-size:12px;color:var(--text-sec);background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:16px;}
+
+.table-scroll{max-height:640px;overflow:auto;border:1px solid var(--border);border-radius:10px;background:#fff;}
+table.data-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.data-table thead th{position:sticky;top:0;background:var(--navy);color:#fff;padding:10px 9px;text-align:right;font-weight:600;z-index:5;white-space:nowrap;}
+.data-table thead th:first-child,.data-table thead th:nth-child(2),.data-table thead th:nth-child(3){text-align:left;}
+.data-table tbody td{padding:7px 9px;border-bottom:1px solid var(--border);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.data-table tbody td:first-child,.data-table tbody td:nth-child(2),.data-table tbody td:nth-child(3){text-align:left;}
+.data-table tbody tr:nth-child(even){background:#FAFBFC;}
+.data-table tbody tr.row-capex{background:var(--row-capex) !important;}
+.data-table tbody tr.row-critical{background:var(--row-critical) !important;}
+.data-table tbody tr.row-critical td{color:var(--red);font-weight:600;}
+.neg{color:var(--red);}
+.esgotado-tag{font-size:10.5px;font-weight:700;color:var(--red);}
+
+footer.app-footer{text-align:center;padding:24px;color:var(--text-sec);font-size:11.5px;}
+
+.print-only{display:none;}
+
+@media print{
+  nav.tabs,.btn-print,#tab-anual,#tab-mensal,.col-inputs,.header-spacer,footer.app-footer,.chart-legend-note{display:none !important;}
+  .print-only{display:block;}
+  *{box-shadow:none !important;box-sizing:border-box !important;}
+  html,body{width:100%;overflow-x:hidden;}
+  body{background:#fff;font-size:10px;}
+  main{padding:0;margin:0;max-width:100%;width:100%;overflow-x:hidden;}
+  header.app-header{padding:0 0 5px;margin-bottom:5px;border-bottom:1px solid #ccc;}
+  .logo-text h1{font-size:14px;}
+  .logo-text .sub{font-size:9px;}
+  .logo-text .credentials{font-size:8px;margin-top:1px;}
+  .resumo-grid{grid-template-columns:1fr;gap:0;min-width:0 !important;width:100%;}
+  .col-results{width:100%;max-width:100%;}
+  .panel,.print-premissa-item,.breakdown-row,.sust-table,.capex-table,.property-card{
+    max-width:100%;word-break:break-word;overflow-wrap:break-word;
+  }
+  table{table-layout:auto;max-width:100%;}
+  .banner{padding:8px 11px;margin-bottom:5px;border-radius:6px;}
+  .banner-row{font-size:11.5px;line-height:1.35;}
+  .banner-row .v{font-size:13px;}
+  .banner-sub{font-size:8.5px;margin-top:3px;}
+  #print-premissas-panel{margin-bottom:5px;}
+  #print-premissas-panel h2{font-size:11px;color:var(--navy);margin-bottom:3px;font-weight:700;}
+  .print-premissa-item{font-size:9px;line-height:1.5;padding:1px 0;border-bottom:1px dotted #ddd;}
+  .panel{break-inside:avoid;border:1px solid #ddd;border-radius:5px;padding:5px 8px;margin-bottom:3px;}
+  .panel h2{font-size:10px;padding-bottom:2px;margin-bottom:3px;}
+  .panel h2 .num{width:13px;height:13px;font-size:8px;}
+  .subsection-label-result{font-size:8px;margin:5px 0 2px;letter-spacing:0.02em;}
+  .breakdown-row{padding:1.5px 0;font-size:8.5px;}
+  .breakdown-row.subtotal{padding-top:3px;font-size:9px;margin-top:1px;}
+  .breakdown-row.final{padding-top:3px;margin-top:2px;font-size:10px;}
+  .field-note{font-size:7.5px;margin-top:2px;}
+  .sust-table th,.sust-table td{padding:2.5px 4px;font-size:8px;}
+  .sust-table th{font-size:7px;}
+  .gap-text{font-size:7.5px;margin-top:1px;}
+  .capex-table th,.capex-table td{padding:2px 5px;font-size:8.5px;}
+  .capex-table th{font-size:7px;}
+  .capex-title-note{font-size:7px;margin-top:2px;}
+  .property-cards{gap:5px;margin-bottom:1px;}
+  .property-card{padding:4px 7px;min-width:0;}
+  .property-card h3{font-size:9px;margin-bottom:1px;}
+  .property-card .loc{font-size:7px;margin-bottom:1.5px;}
+  .property-card .row{font-size:7.5px;margin-bottom:1px;}
+  .property-card .yield-value{font-size:11.5px;margin-top:1.5px;}
+  .badge{font-size:6.5px;padding:1.5px 4px;margin-top:1.5px;line-height:1.4;}
+  /* .chart-container: altura controlada via JS em baixarResumoPDF() — ver nota abaixo */
+  .exhaustion-alert{padding:3px 6px;font-size:8px;margin-top:3px;}
+  @page{size:A4;margin:7mm;}
+}
+@media (max-width:1280px){
+  main{overflow-x:auto;}
+  .resumo-grid{min-width:1180px;}
+}
+</style>
+</head>
+<body>
+<header class="app-header">
+  <div class="logo-text">
+    <h1>PRINCIPIA WEALTH</h1>
+    <div class="sub">Simulador Patrimonial</div>
+    <div class="credentials">Vinicius Ramires · Consultor CVM · Profissional CNPI · <a href="https://principiawealth.com.br/" target="_blank" rel="noopener">principiawealth.com.br</a></div>
+  </div>
+  <div class="header-spacer"></div>
+  <button class="btn-print" onclick="baixarResumoPDF()">Baixar Resumo em PDF</button>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="resumo">Resumo</button>
+  <button class="tab-btn" data-tab="anual">Projeção Anual</button>
+  <button class="tab-btn" data-tab="mensal">Projeção Mensal</button>
+</nav>
+
+<main>
+
+<!-- ===================== TAB RESUMO ===================== -->
+<section id="tab-resumo" class="tab-content active">
+
+  <div id="banner-veredicto" class="banner b-verde"></div>
+
+  <div id="print-premissas-panel" class="print-only">
+    <h2>Premissas e decisões consideradas</h2>
+    <div id="print-premissas"></div>
+  </div>
+
+  <div class="resumo-grid">
+    <!-- COLUNA ESQUERDA: INPUTS -->
+    <div class="col-inputs">
+
+      <div class="panel">
+        <h2><span class="num">1</span>Parâmetros gerais</h2>
+        <div class="field">
+          <label>Rentabilidade real esperada das aplicações ao ano (líq. IR)
+            <span class="tooltip-icon">?<span class="tooltip-box">Retorno real anual esperado das aplicações, já descontado o Imposto de Renda. Default: 4% ao ano.</span></span>
+          </label>
+          <input type="text" inputmode="decimal" id="in-taxa-real" value="4,0%">
+          <div class="field-note">Premissa baseada em portfólio conservador, líquida de impostos. Referência histórica: nos últimos 15 anos, o CDI rendeu IPCA+3,9% bruto ao ano.</div>
+        </div>
+        <div class="field">
+          <label>Inflação anual
+            <span class="tooltip-icon">?<span class="tooltip-box">Com zero, todos os valores são em reais de hoje. Ao inserir inflação, o modelo passa para valores nominais.</span></span>
+          </label>
+          <input type="text" inputmode="decimal" id="in-inflacao" value="0,0%">
+          <div class="field-note">Com inflação em zero, todos os valores estão em reais de hoje (termos reais). Ao inserir inflação, o modelo passa a operar em valores nominais.</div>
+        </div>
+        <div class="field">
+          <label>Câmbio EUR/BRL</label>
+          <input type="text" inputmode="decimal" id="in-cambio" value="6,30">
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Renda mínima (R$/mês)</label><input type="text" inputmode="decimal" id="in-renda-minima" value="30.000"></div>
+          <div class="field"><label>Renda objetivo (R$/mês)</label><input type="text" inputmode="decimal" id="in-renda-objetivo" value="40.000"></div>
+        </div>
+        <div class="field"><label>Renda máxima (R$/mês)</label><input type="text" inputmode="decimal" id="in-renda-ideal" value="50.000"></div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="num">2</span>Patrimônio financeiro</h2>
+        <div class="field">
+          <label>Carteira XP (R$)</label>
+          <input type="text" inputmode="decimal" id="in-carteira-xp" value="2.883.000">
+        </div>
+
+        <div class="subsection-label">Valores a receber (R$)</div>
+        <table class="dyn-table"><tbody id="tbody-recebiveis"></tbody></table>
+        <div class="dyn-total"><span>Total</span><span id="total-recebiveis">R$ 0</span></div>
+        <button class="btn-add" id="btn-add-recebivel">+ Adicionar item</button>
+
+        <div class="subsection-label">Valores a pagar (R$)</div>
+        <table class="dyn-table"><tbody id="tbody-pagamentos"></tbody></table>
+        <div class="dyn-total"><span>Total</span><span id="total-pagamentos">R$ 0</span></div>
+        <button class="btn-add" id="btn-add-pagamento">+ Adicionar item</button>
+      </div>
+
+      <div class="panel">
+        <h2><span class="num">3</span>Galpão (Guarulhos)</h2>
+        <div class="field">
+          <label>Decisão</label>
+          <div class="toggle-group" id="toggle-galpao">
+            <button class="toggle-btn active" data-value="manter">Manter</button>
+            <button class="toggle-btn" data-value="vender">Vender</button>
+          </div>
+        </div>
+        <div class="field"><label>Valor declarado (R$)</label><input type="text" inputmode="decimal" id="in-galpao-valor" value="4.000.000"></div>
+        <div id="galpao-detail-fields">
+          <div class="field"><label>Renda líquida mensal (R$, ocupado)</label><input type="text" inputmode="decimal" id="in-galpao-renda" value="21.000"></div>
+          <div class="field">
+            <label>Vacância média anual (%)
+              <span class="tooltip-icon">?<span class="tooltip-box">Percentual do tempo em que o imóvel fica desocupado. Ex: 12,5% = ~6 meses a cada 4 anos.</span></span>
+            </label>
+            <input type="text" inputmode="decimal" id="in-galpao-vacancia" value="12,5%">
+          </div>
+          <div class="field">
+            <label>IPTU mensal (R$)
+              <span class="tooltip-icon">?<span class="tooltip-box">Pago pelo inquilino. Vira custo da cliente durante vacância.</span></span>
+            </label>
+            <input type="text" inputmode="decimal" id="in-galpao-iptu" value="1.650">
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="num">4</span>Studio Paris</h2>
+        <div class="field">
+          <label>Decisão</label>
+          <div class="toggle-group" id="toggle-paris">
+            <button class="toggle-btn" data-value="vender">Vender</button>
+            <button class="toggle-btn active" data-value="manter">Manter</button>
+            <button class="toggle-btn" data-value="manter_alugar">Manter e alugar</button>
+          </div>
+        </div>
+        <div class="field"><label>Valor declarado (EUR)</label><input type="text" inputmode="decimal" id="in-paris-valor" value="190.000"></div>
+        <div id="paris-detail-fields">
+          <div class="field">
+            <label>Custo fixo anual (EUR)
+              <span class="tooltip-icon">?<span class="tooltip-box">Valor pago anualmente pela cliente (condomínio, seguros, taxas), independente de o studio estar alugado.</span></span>
+            </label>
+            <input type="text" inputmode="decimal" id="in-paris-custo" value="4.000">
+          </div>
+          <div id="paris-aluguel-fields" style="display:none;">
+            <div class="field">
+              <label>Renda mensal líquida quando alugado (EUR)
+                <span class="tooltip-icon">?<span class="tooltip-box">Valor líquido que a cliente recebe por mês de aluguel, em euros. O custo fixo anual acima é descontado separadamente deste valor.</span></span>
+              </label>
+              <input type="text" inputmode="decimal" id="in-paris-renda-alugado" value="1.000">
+            </div>
+            <div class="field">
+              <label>Meses alugados por ano</label>
+              <div class="slider-row">
+                <input type="range" id="slider-paris-meses" min="0" max="12" step="1" value="6">
+                <input type="text" inputmode="decimal" id="in-paris-meses" class="slider-value-input" value="6">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="num">5</span>Reforma de Ubatuba</h2>
+        <div class="field"><label>Valor declarado do imóvel (R$)</label><input type="text" inputmode="decimal" id="in-ubatuba-valor" value="2.500.000"></div>
+        <div class="field">
+          <label>Renda anual de temporada (R$)</label>
+          <input type="text" inputmode="decimal" id="in-ubatuba-renda" value="20.000">
+          <div class="field-note">Referência histórica: R$50.000 em 2023 e 2024; R$20.000 em 2025. Ajuste conforme expectativa de uso.</div>
+        </div>
+        <div class="field"><label>Custos mensais recorrentes (R$)</label><input type="text" inputmode="decimal" id="in-ubatuba-custos" value="0"></div>
+        <div class="field">
+          <label>Capex da reforma (R$)
+            <span class="tooltip-icon">?<span class="tooltip-box">Valor máximo de reforma compatível com a meta de renda, mantidas as demais premissas.</span></span>
+          </label>
+          <div class="slider-row">
+            <input type="range" id="slider-capex" min="0" max="1200000" step="50000" value="850000">
+            <input type="text" inputmode="decimal" id="in-capex-text" class="slider-value-input" value="850.000">
+          </div>
+        </div>
+        <div id="feedback-capex" class="feedback-line"></div>
+        <div class="field" style="margin-top:13px;">
+          <label>Mês de início da reforma
+            <span class="tooltip-icon">?<span class="tooltip-box">Mês em que o capital da reforma sai do portfólio. Mês 1 = julho de 2026.</span></span>
+          </label>
+          <input type="number" id="in-mes-reforma" min="1" max="36" step="1" value="1">
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2><span class="num">6</span>Apartamento SP</h2>
+        <div class="field"><label>Valor atual (R$)</label><input type="text" inputmode="decimal" id="in-ap-valor" value="3.200.000"></div>
+        <div class="field">
+          <label>Decisão</label>
+          <div class="toggle-group" id="toggle-ap">
+            <button class="toggle-btn active" data-value="manter">Manter</button>
+            <button class="toggle-btn" data-value="substituir">Substituir por outro</button>
+          </div>
+        </div>
+        <div id="ap-substituir-fields" style="display:none;">
+          <div class="field"><label>Valor do novo apartamento (R$)</label><input type="text" inputmode="decimal" id="in-ap-valor-novo" value="3.200.000"></div>
+          <div class="field-note">A substituição pode envolver ITBI e comissão imobiliária. Se aplicável, inclua esses valores em "Valores a Pagar".</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- COLUNA DIREITA: RESULTADOS -->
+    <div class="col-results">
+      <div class="panel">
+        <h2>A — Composição do Capital Financeiro Disponível</h2>
+        <div id="bloco-a"></div>
+      </div>
+
+      <div class="panel">
+        <h2>B — Sustentabilidade da Renda</h2>
+        <div id="bloco-b"></div>
+      </div>
+
+      <div class="panel">
+        <h2>C — Quanto posso gastar na reforma de Ubatuba?</h2>
+        <div id="bloco-c"></div>
+      </div>
+
+      <div class="panel">
+        <h2>D — Rentabilidade dos Imóveis Mantidos</h2>
+        <div id="bloco-d"></div>
+      </div>
+
+      <div class="panel">
+        <h2>E — Rentabilidade Necessária</h2>
+        <div id="bloco-e"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== TAB ANUAL ===================== -->
+<section id="tab-anual" class="tab-content">
+  <div class="top-note">Trajetória patrimonial dos 69 aos 100 anos, ano a ano. Os valores assumem a renda sustentável de cada modo (não a meta de renda escolhida).</div>
+  <div class="panel">
+    <div class="toolbar">
+      <div class="toolbar-group">
+        <label class="checkbox-row"><input type="checkbox" id="chk-patrimonio-total"> Mostrar patrimônio total (capital + imóveis)</label>
+      </div>
+    </div>
+    <div class="chart-container" style="height:380px;"><canvas id="chart-anual"></canvas></div>
+    <div class="chart-legend-note">Preservação: patrimônio mantido ao longo do tempo. Depleção: capital utilizado até os 100 anos.</div>
+    <div id="bloco-alerta-anual"></div>
+  </div>
+  <div class="panel">
+    <div class="toolbar">
+      <div class="toolbar-group">
+        <label>Modo exibido na tabela</label>
+        <div class="toggle-group" id="toggle-modo-anual" style="width:240px;">
+          <button class="toggle-btn active" data-value="preservacao">Preservação</button>
+          <button class="toggle-btn" data-value="depleção">Depleção</button>
+        </div>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr>
+          <th>Ano</th><th>Período</th><th>Idade</th><th>Capital Inicial</th><th>Rendimento</th>
+          <th>Renda de Imóveis</th><th>Retirada</th><th>Capex Reforma</th><th>Saldo Final</th>
+        </tr></thead>
+        <tbody id="tbody-anual"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== TAB MENSAL ===================== -->
+<section id="tab-mensal" class="tab-content">
+  <div class="top-note">Todos os valores em reais de hoje (sem inflação), salvo se inflação for informada nos parâmetros.</div>
+  <div class="panel">
+    <h2>Composição da coluna "Renda de Imóveis" (média mensal, base mês 1)</h2>
+    <div id="bloco-composicao-imoveis"></div>
+  </div>
+  <div class="panel">
+    <div class="toolbar">
+      <div class="toolbar-group">
+        <label>Modo</label>
+        <div class="toggle-group" id="toggle-modo-mensal" style="width:240px;">
+          <button class="toggle-btn active" data-value="preservacao">Preservação</button>
+          <button class="toggle-btn" data-value="depleção">Depleção</button>
+        </div>
+      </div>
+      <div class="toolbar-group">
+        <label>Filtrar ano</label>
+        <select id="filtro-ano-mensal"></select>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr>
+          <th>Mês</th><th>Data</th><th>Idade</th><th>Capital Inicial</th><th>Rendimento</th>
+          <th>Renda de Imóveis</th><th>Retirada</th><th>Capex</th><th>Saldo Final</th>
+        </tr></thead>
+        <tbody id="tbody-mensal"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+<footer class="app-footer">Principia Wealth · Simulador de Decisão Patrimonial</footer>
+<script>
+'use strict';
+/* ======================================================================
+   MOTOR DE CÁLCULO — validado isoladamente via Node antes da integração
+   ====================================================================== */
+const N_MESES = 372;
+
+function getTaxas(taxaRealPct, inflacaoPct){
+  const taxaRealAnual = taxaRealPct/100;
+  const inflacaoAnual = inflacaoPct/100;
+  let taxaMensal;
+  if (inflacaoAnual === 0){
+    taxaMensal = Math.pow(1+taxaRealAnual, 1/12) - 1;
+  } else {
+    const taxaNominalAnual = (1+taxaRealAnual)*(1+inflacaoAnual) - 1;
+    taxaMensal = Math.pow(1+taxaNominalAnual, 1/12) - 1;
+  }
+  const taxaInflacaoMensal = Math.pow(1+inflacaoAnual, 1/12) - 1;
+  return { taxaMensal, taxaInflacaoMensal, taxaRealAnual, inflacaoAnual };
+}
+
+function simulateFast(metaRendaMensal, cfi, rendaImoveisMensal, capexUbatuba, mesInicioReforma, taxaMensal, taxaInflacaoMensal){
+  let capital = cfi;
+  let mesExaustao = null;
+  for (let m=1; m<=N_MESES; m++){
+    const fatorInflacao = taxaInflacaoMensal === 0 ? 1 : Math.pow(1+taxaInflacaoMensal, m);
+    const rendaImoveisM = rendaImoveisMensal * fatorInflacao;
+    const metaRendaM = metaRendaMensal * fatorInflacao;
+    const capitalBruto = capital * (1+taxaMensal);
+    const retirada = Math.max(0, metaRendaM - rendaImoveisM);
+    const capexNoMes = (m === mesInicioReforma) ? capexUbatuba * (taxaInflacaoMensal>0 ? fatorInflacao : 1) : 0;
+    capital = capitalBruto - retirada - capexNoMes;
+    if (capital < 0){
+      if (mesExaustao === null) mesExaustao = m;
+      capital = 0;
+    }
+  }
+  return { final: capital, mesExaustao };
+}
+
+function simulateFull(metaRendaMensal, cfi, rendaImoveisMensal, capexUbatuba, mesInicioReforma, taxaMensal, taxaInflacaoMensal){
+  const capitalArr = new Array(N_MESES+1);
+  const registros = new Array(N_MESES);
+  capitalArr[0] = cfi;
+  let mesExaustao = null;
+  for (let m=1; m<=N_MESES; m++){
+    const fatorInflacao = taxaInflacaoMensal === 0 ? 1 : Math.pow(1+taxaInflacaoMensal, m);
+    const rendaImoveisM = rendaImoveisMensal * fatorInflacao;
+    const metaRendaM = metaRendaMensal * fatorInflacao;
+    const capitalInicial = capitalArr[m-1];
+    const rendimento = capitalInicial * taxaMensal;
+    const capitalBruto = capitalInicial + rendimento;
+    const retirada = Math.max(0, metaRendaM - rendaImoveisM);
+    const capexNoMes = (m === mesInicioReforma) ? capexUbatuba * (taxaInflacaoMensal>0 ? fatorInflacao : 1) : 0;
+    let capitalFinal = capitalBruto - retirada - capexNoMes;
+    if (capitalFinal < 0){
+      if (mesExaustao === null) mesExaustao = m;
+      capitalFinal = 0;
+    }
+    capitalArr[m] = capitalFinal;
+    registros[m-1] = { mes:m, capitalInicial, rendimento, rendaImoveis: rendaImoveisM, retirada, capex: capexNoMes, capitalFinal };
+  }
+  return { capital: capitalArr, registros, mesExaustao };
+}
+
+function buscaRendaSustentavel(modo, p){
+  const { cfi, rendaImoveisMensal, capexUbatuba, mesInicioReforma, taxaMensal, taxaInflacaoMensal, inflacaoAnual } = p;
+  let capitalAlvo;
+  if (modo === 'preservacao'){
+    // Preserva o CAPITAL FINANCEIRO LÍQUIDO (após o capex da reforma), não o
+    // capital disponível antes da reforma: o custo da reforma é um fato
+    // consumado, e a meta é preservar o que resta a partir daí.
+    const capitalLiquidoBase = cfi - capexUbatuba;
+    const alvoRaw = inflacaoAnual === 0 ? capitalLiquidoBase : capitalLiquidoBase * Math.pow(1+inflacaoAnual, 31);
+    capitalAlvo = Math.max(0, alvoRaw);
+  } else {
+    capitalAlvo = 0;
+  }
+  let low = rendaImoveisMensal;
+  let high;
+  if (Math.abs(taxaMensal) < 1e-12){
+    high = cfi/N_MESES + rendaImoveisMensal;
+  } else {
+    high = cfi * (taxaMensal / (1 - Math.pow(1+taxaMensal, -N_MESES))) + rendaImoveisMensal;
+  }
+  if (high < low) high = low + 1;
+  for (let i=0; i<50; i++){
+    const mid = (low+high)/2;
+    const { final, mesExaustao } = simulateFast(mid, cfi, rendaImoveisMensal, capexUbatuba, mesInicioReforma, taxaMensal, taxaInflacaoMensal);
+    let sustentavel;
+    if (capitalAlvo > 0){
+      sustentavel = final >= capitalAlvo;
+    } else {
+      // Alvo <= 0 (Depleção sempre, ou Preservação em cenário extremo onde o
+      // capex consome mais capital do que existe): não usar apenas "final>=0",
+      // pois o piso de capital em zero satisfaz capital[372]=0 trivialmente
+      // assim que o patrimônio já zerou antes — isso quebraria a
+      // monotonicidade da busca. Usa-se o mês de exaustão.
+      sustentavel = (mesExaustao === null) || (mesExaustao >= N_MESES);
+    }
+    if (sustentavel) low = mid; else high = mid;
+  }
+  return low;
+}
+
+function computeCapexMax(modo, metaRenda, p){
+  let low = 0, high = p.cfi;
+  for (let i=0; i<50; i++){
+    const capexTeste = (low+high)/2;
+    const rendaSust = buscaRendaSustentavel(modo, Object.assign({}, p, { capexUbatuba: capexTeste }));
+    if (rendaSust >= metaRenda) low = capexTeste; else high = capexTeste;
+  }
+  return low;
+}
+
+// Busca a rentabilidade real líquida (% a.a.) necessária para sustentar uma
+// renda-alvo fixa, preservando o Capital Financeiro Líquido (preservação) ou
+// zerando o capital exatamente aos 100 anos (depleção).
+function buscaTaxaNecessaria(modo, metaRendaMensal, p){
+  const { cfi, rendaImoveisMensal, capexUbatuba, mesInicioReforma, inflacaoAnual } = p;
+
+  function sustentavelATaxa(taxaRealPct){
+    const taxas = getTaxas(taxaRealPct, inflacaoAnual*100);
+    const { final, mesExaustao } = simulateFast(metaRendaMensal, cfi, rendaImoveisMensal, capexUbatuba, mesInicioReforma, taxas.taxaMensal, taxas.taxaInflacaoMensal);
+    let capitalAlvo;
+    if (modo === 'preservacao'){
+      const capitalLiquidoBase = cfi - capexUbatuba;
+      const alvoRaw = inflacaoAnual === 0 ? capitalLiquidoBase : capitalLiquidoBase * Math.pow(1+inflacaoAnual, 31);
+      capitalAlvo = Math.max(0, alvoRaw);
+    } else {
+      capitalAlvo = 0;
+    }
+    if (capitalAlvo > 0) return final >= capitalAlvo;
+    return (mesExaustao === null) || (mesExaustao >= N_MESES);
+  }
+
+  const LOW_BOUND = -10, HIGH_BOUND = 25; // % a.a. — limites de busca
+  if (!sustentavelATaxa(HIGH_BOUND)) return { taxa: HIGH_BOUND, status: 'inatingivel' };
+  if (sustentavelATaxa(LOW_BOUND)) return { taxa: LOW_BOUND, status: 'piso' };
+
+  let low = LOW_BOUND, high = HIGH_BOUND;
+  for (let i=0; i<60; i++){
+    const mid = (low+high)/2;
+    if (sustentavelATaxa(mid)) high = mid; else low = mid;
+  }
+  return { taxa: high, status: 'ok' };
+}
+</script>
+<script>
+/* ======================================================================
+   ESTADO DA APLICAÇÃO
+   ====================================================================== */
+const state = {
+  taxaReal: 4.0, inflacao: 0.0, cambio: 6.30,
+  rendaMinima: 30000, rendaObjetivo: 40000, rendaIdeal: 50000,
+  carteiraXP: 2883000,
+  recebiveis: [
+    { id: 'r1', desc: 'Processo judicial concluído', valor: 240000 },
+    { id: 'r2', desc: 'Processo judicial em andamento', valor: 150000 }
+  ],
+  pagamentos: [
+    { id: 'p1', desc: 'ITBI - Apartamento PF para PJ', valor: 82000 }
+  ],
+  apValorAtual: 3200000, apDecisao: 'manter', apValorNovo: 3200000,
+  galpaoValor: 4000000, galpaoDecisao: 'manter', galpaoRendaMensal: 21000, galpaoVacancia: 12.5, galpaoIPTU: 1650,
+  ubatubaValor: 2500000, ubatubaRendaAnual: 20000, ubatubaCustosMensais: 0, ubatubaCapex: 850000, ubatubaMesReforma: 1,
+  parisValorEUR: 190000, parisDecisao: 'manter', parisCustoFixoEUR: 4000, parisRendaAlugadoEUR: 1000, parisMesesAlugados: 6
+};
+let _rowSeq = 3; // próximo sufixo para novas linhas dinâmicas
+
+/* ======================================================================
+   FORMATAÇÃO pt-BR
+   ====================================================================== */
+const fmtBRLFull = new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL', maximumFractionDigits:0 });
+const fmtPct1 = (v) => v.toLocaleString('pt-BR', { minimumFractionDigits:1, maximumFractionDigits:1 }) + '%';
+
+function fmtBRL(v){
+  // valores negativos -> parênteses em vermelho (o chamador decide a cor via classe)
+  const abs = Math.abs(Math.round(v));
+  const s = abs.toLocaleString('pt-BR');
+  return v < 0 ? '(R$' + s + ')' : 'R$' + s;
+}
+function fmtBRLSigned(v, span){
+  const neg = v < 0;
+  const text = fmtBRL(v);
+  return '<span class="' + (neg ? 'neg' : '') + '">' + text + '</span>';
+}
+function fmtBRLCompact(v){
+  const abs = Math.abs(v);
+  if (abs >= 1000000) return (v<0?'-':'') + 'R$' + (abs/1000000).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) + 'mi';
+  if (abs >= 1000) return (v<0?'-':'') + 'R$' + (abs/1000).toLocaleString('pt-BR',{maximumFractionDigits:0}) + 'mil';
+  return fmtBRL(v);
+}
+
+const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+function dataDoMes(m){
+  // m=1 -> Julho/2026
+  const idx0 = (6 + (m-1)) % 12; // Julho = índice 6 (0-based Jan=0)
+  const anosPassados = Math.floor((6 + (m-1)) / 12);
+  const ano = 2026 + anosPassados;
+  return MESES_PT[idx0] + '/' + ano;
+}
+function idadeNoMes(m){
+  // mês 1 = exatamente 69 anos e 0 meses (nasc. jul/1957)
+  const totalMeses = 69*12 + (m-1);
+  return { anos: Math.floor(totalMeses/12), meses: totalMeses%12 };
+}
+
+/* ======================================================================
+   LÓGICA DE DOMÍNIO — CFI e renda dos imóveis
+   ====================================================================== */
+function calcCFIBreakdown(s){
+  const totalRecebiveis = s.recebiveis.reduce((a,r)=>a+(Number(r.valor)||0),0);
+  const totalPagamentos = s.pagamentos.reduce((a,r)=>a+(Number(r.valor)||0),0);
+  let conversaoAtivos = 0;
+  if (s.galpaoDecisao === 'vender') conversaoAtivos += s.galpaoValor;
+  if (s.parisDecisao === 'vender') conversaoAtivos += s.parisValorEUR * s.cambio;
+  let trocaAp = 0;
+  if (s.apDecisao === 'substituir') trocaAp = s.apValorAtual - s.apValorNovo;
+  const capitalAntesReforma = s.carteiraXP + totalRecebiveis - totalPagamentos + conversaoAtivos + trocaAp;
+  const capitalLiquido = capitalAntesReforma - s.ubatubaCapex;
+  return { totalRecebiveis, totalPagamentos, conversaoAtivos, trocaAp, capitalAntesReforma, capitalLiquido };
+}
+
+function calcGalpao(s){
+  if (s.galpaoDecisao === 'vender') return { rendaMensalMedia:0, rendaLiquidaAnual:0, yieldAnual:null, ativo:false };
+  const vacPct = s.galpaoVacancia/100;
+  const rendaBrutaAnual = s.galpaoRendaMensal * 12 * (1 - vacPct);
+  const custoIPTUAnual = s.galpaoIPTU * 12 * vacPct;
+  const rendaLiquidaAnual = rendaBrutaAnual - custoIPTUAnual;
+  const rendaMensalMedia = rendaLiquidaAnual/12;
+  const yieldAnual = s.galpaoValor > 0 ? rendaLiquidaAnual / s.galpaoValor : null;
+  return { rendaMensalMedia, rendaLiquidaAnual, yieldAnual, ativo:true };
+}
+
+function calcUbatuba(s){
+  const rendaLiquidaAnual = s.ubatubaRendaAnual - (s.ubatubaCustosMensais*12);
+  const rendaMensalMedia = rendaLiquidaAnual/12;
+  const yieldAnual = s.ubatubaValor > 0 ? rendaLiquidaAnual / s.ubatubaValor : null;
+  return { rendaMensalMedia, rendaLiquidaAnual, yieldAnual, ativo:true };
+}
+
+function calcParis(s){
+  const valorBRL = s.parisValorEUR * s.cambio;
+  if (s.parisDecisao === 'vender') return { rendaMensalMedia:0, rendaLiquidaAnual:0, yieldAnual:null, proceeds:valorBRL, ativo:false };
+  if (s.parisDecisao === 'manter'){
+    const custoAnualBRL = s.parisCustoFixoEUR * s.cambio;
+    return { rendaMensalMedia: -custoAnualBRL/12, rendaLiquidaAnual: -custoAnualBRL, yieldAnual: valorBRL>0 ? -custoAnualBRL/valorBRL : null, proceeds:0, ativo:true };
+  }
+  // manter_alugar — renda mensal informada em EUR (líquida), convertida para BRL
+  const rendaBrutaAnualEUR = s.parisRendaAlugadoEUR * s.parisMesesAlugados;
+  const rendaBrutaAnualBRL = rendaBrutaAnualEUR * s.cambio;
+  const custoFixoAnualBRL = s.parisCustoFixoEUR * s.cambio;
+  const rendaLiquidaAnual = rendaBrutaAnualBRL - custoFixoAnualBRL;
+  const rendaMensalMedia = rendaLiquidaAnual/12;
+  const yieldAnual = valorBRL>0 ? rendaLiquidaAnual / valorBRL : null;
+  return { rendaMensalMedia, rendaLiquidaAnual, yieldAnual, proceeds:0, ativo:true };
+}
+
+function badgeFor(yieldVal, taxaRealAnual){
+  if (yieldVal === null) return { cls:'amarelo', label:'—' };
+  if (yieldVal >= taxaRealAnual) return { cls:'verde', label:'✓ Acima da alternativa financeira' };
+  if (yieldVal >= taxaRealAnual - 0.01) return { cls:'amarelo', label:'≈ Na média da alternativa' };
+  return { cls:'vermelho', label:'⚠ Abaixo da alternativa financeira' };
+}
+
+/* ======================================================================
+   COMPUTE ALL — orquestra o motor para o estado atual
+   ====================================================================== */
+function computeAll(s){
+  const cfiB = calcCFIBreakdown(s);
+  const cfi = cfiB.capitalAntesReforma;
+  const taxas = getTaxas(s.taxaReal, s.inflacao);
+  const galpao = calcGalpao(s);
+  const ubatuba = calcUbatuba(s);
+  const paris = calcParis(s);
+  const rendaImoveisMensal = galpao.rendaMensalMedia + ubatuba.rendaMensalMedia + paris.rendaMensalMedia;
+
+  const baseParams = {
+    cfi, rendaImoveisMensal, capexUbatuba: s.ubatubaCapex, mesInicioReforma: s.ubatubaMesReforma,
+    taxaMensal: taxas.taxaMensal, taxaInflacaoMensal: taxas.taxaInflacaoMensal, inflacaoAnual: taxas.inflacaoAnual
+  };
+
+  const rendaSustPres = buscaRendaSustentavel('preservacao', baseParams);
+  const rendaSustDepl = buscaRendaSustentavel('depleção', baseParams);
+
+  const simPres = simulateFull(rendaSustPres, cfi, rendaImoveisMensal, s.ubatubaCapex, s.ubatubaMesReforma, taxas.taxaMensal, taxas.taxaInflacaoMensal);
+  const simDepl = simulateFull(rendaSustDepl, cfi, rendaImoveisMensal, s.ubatubaCapex, s.ubatubaMesReforma, taxas.taxaMensal, taxas.taxaInflacaoMensal);
+
+  const metas = [
+    { nome:'minima', valor: s.rendaMinima },
+    { nome:'objetivo', valor: s.rendaObjetivo },
+    { nome:'ideal', valor: s.rendaIdeal }
+  ];
+  const capexMax = {};
+  for (const meta of metas){
+    capexMax[meta.nome] = {
+      preservacao: computeCapexMax('preservacao', meta.valor, baseParams),
+      'depleção': computeCapexMax('depleção', meta.valor, baseParams)
+    };
+  }
+
+  // feedback de capex: renda sustentável (preservação) com capex=0 vs atual
+  const rendaSustPresSemCapex = buscaRendaSustentavel('preservacao', Object.assign({}, baseParams, { capexUbatuba: 0 }));
+
+  // rentabilidade real necessária para sustentar cada meta de renda (Bloco E)
+  const taxaNecessaria = {};
+  for (const meta of metas){
+    taxaNecessaria[meta.nome] = {
+      preservacao: buscaTaxaNecessaria('preservacao', meta.valor, baseParams),
+      'depleção': buscaTaxaNecessaria('depleção', meta.valor, baseParams)
+    };
+  }
+
+  // viabilidade direta de cada meta: o patrimônio (imóveis + XP) sustenta essa
+  // renda até os 100 anos? Se não, com quantos anos de idade se esgota?
+  // (simulação direta com retirada = meta fixa, não uma busca — Bloco B novo)
+  const metaViabilidade = {};
+  for (const meta of metas){
+    const simMeta = simulateFull(meta.valor, cfi, rendaImoveisMensal, s.ubatubaCapex, s.ubatubaMesReforma, taxas.taxaMensal, taxas.taxaInflacaoMensal);
+    const achievable = (simMeta.mesExaustao === null) || (simMeta.mesExaustao >= N_MESES);
+    const idadeExaustao = achievable ? null : idadeNoMes(simMeta.mesExaustao);
+    const resgateNecessario = Math.max(0, meta.valor - rendaImoveisMensal);
+    metaViabilidade[meta.nome] = { achievable, mesExaustao: simMeta.mesExaustao, idadeExaustao, resgateNecessario };
+  }
+
+  // valor total dos imóveis mantidos (para "patrimônio total")
+  let valorImoveisMantidos = ubatuba.ativo ? s.ubatubaValor : 0;
+  if (galpao.ativo) valorImoveisMantidos += s.galpaoValor;
+  if (paris.ativo) valorImoveisMantidos += s.parisValorEUR * s.cambio;
+  if (s.apDecisao === 'manter') valorImoveisMantidos += s.apValorAtual; else valorImoveisMantidos += s.apValorNovo;
+
+  return { cfiB, cfi, taxas, galpao, ubatuba, paris, rendaImoveisMensal, rendaSustPres, rendaSustDepl,
+           simPres, simDepl, capexMax, rendaSustPresSemCapex, taxaNecessaria, metaViabilidade, valorImoveisMantidos, baseParams };
+}
+</script>
+<script>
+/* ======================================================================
+   RENDER — tabelas dinâmicas (recebíveis / pagamentos)
+   ====================================================================== */
+function renderDynTable(listName, tbodyId, totalId){
+  const tbody = document.getElementById(tbodyId);
+  const rows = state[listName];
+  tbody.innerHTML = rows.map(row => (
+    '<tr data-id="' + row.id + '">' +
+      '<td class="desc-col"><input type="text" class="dyn-desc" value="' + escapeAttr(row.desc) + '"></td>' +
+      '<td class="val-col"><input type="text" inputmode="decimal" class="dyn-valor" value="' + formatNumberPt(row.valor, 0) + '"></td>' +
+      '<td class="rm-col"><button class="remove-btn" type="button">×</button></td>' +
+    '</tr>'
+  )).join('');
+
+  tbody.querySelectorAll('tr').forEach(tr => {
+    const id = tr.getAttribute('data-id');
+    tr.querySelector('.dyn-desc').addEventListener('input', e => {
+      const row = state[listName].find(r => r.id === id);
+      if (row) row.desc = e.target.value;
+      // descrição não afeta cálculo, então não precisa recalcular tudo — só evita lag
+    });
+    const valorInput = tr.querySelector('.dyn-valor');
+    valorInput.addEventListener('focus', e => {
+      const row = state[listName].find(r => r.id === id);
+      e.target.value = String(Math.round(row ? row.valor : 0));
+      e.target.select();
+    });
+    valorInput.addEventListener('input', e => {
+      const row = state[listName].find(r => r.id === id);
+      if (row) row.valor = parseFormattedNumber(e.target.value, 0);
+      updateDynTotal(listName, totalId);
+      scheduleRecalc();
+    });
+    valorInput.addEventListener('blur', e => {
+      const row = state[listName].find(r => r.id === id);
+      e.target.value = formatNumberPt(row ? row.valor : 0, 0);
+    });
+    tr.querySelector('.remove-btn').addEventListener('click', () => {
+      state[listName] = state[listName].filter(r => r.id !== id);
+      renderDynTable(listName, tbodyId, totalId);
+      scheduleRecalc();
+    });
+  });
+  updateDynTotal(listName, totalId);
+}
+function updateDynTotal(listName, totalId){
+  const total = state[listName].reduce((a,r)=>a+(Number(r.valor)||0),0);
+  document.getElementById(totalId).textContent = fmtBRL(total);
+}
+function escapeAttr(s){
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+document.getElementById('btn-add-recebivel').addEventListener('click', () => {
+  state.recebiveis.push({ id: 'r' + (++_rowSeq), desc: '', valor: 0 });
+  renderDynTable('recebiveis', 'tbody-recebiveis', 'total-recebiveis');
+  scheduleRecalc();
+});
+document.getElementById('btn-add-pagamento').addEventListener('click', () => {
+  state.pagamentos.push({ id: 'p' + (++_rowSeq), desc: '', valor: 0 });
+  renderDynTable('pagamentos', 'tbody-pagamentos', 'total-pagamentos');
+  scheduleRecalc();
+});
+
+/* ======================================================================
+   RENDER — toggles (galpão / paris / apartamento)
+   ====================================================================== */
+function wireToggle(containerId, onChange){
+  const container = document.getElementById(containerId);
+  container.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      container.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      onChange(btn.getAttribute('data-value'));
+      scheduleRecalc();
+    });
+  });
+}
+wireToggle('toggle-galpao', v => {
+  state.galpaoDecisao = v;
+  document.getElementById('galpao-detail-fields').style.display = (v === 'vender') ? 'none' : '';
+});
+wireToggle('toggle-paris', v => {
+  state.parisDecisao = v;
+  document.getElementById('paris-detail-fields').style.display = (v === 'vender') ? 'none' : '';
+  document.getElementById('paris-aluguel-fields').style.display = (v === 'manter_alugar') ? '' : 'none';
+});
+wireToggle('toggle-ap', v => {
+  state.apDecisao = v;
+  document.getElementById('ap-substituir-fields').style.display = (v === 'substituir') ? '' : 'none';
+});
+
+/* ======================================================================
+   RENDER — inputs estáticos (binding direto, sem reconstrução de DOM)
+   ====================================================================== */
+function bindNumber(id, stateKey, onAfter){
+  const el = document.getElementById(id);
+  el.addEventListener('input', () => {
+    state[stateKey] = parseFloat(el.value);
+    if (isNaN(state[stateKey])) state[stateKey] = 0;
+    if (onAfter) onAfter();
+    scheduleRecalc();
+  });
+}
+
+/* Inputs monetários/percentuais: aceitam entrada sem formatação durante a
+   edição e formatam automaticamente (padrão pt-BR) ao sair do campo (onBlur). */
+function parseFormattedNumber(text, decimals){
+  // aceita tanto "2.883.000" (pt-BR) quanto "2883000" ou "4,5" digitados livremente
+  let t = String(text).replace(/[^\d,.\-]/g, '');
+  if (decimals === 0){
+    // campo sem casas decimais: qualquer ponto presente é separador de milhar, nunca decimal
+    t = t.replace(/\./g, '').replace(',', '.');
+  } else if (t.indexOf(',') > -1){
+    t = t.replace(/\./g, '').replace(',', '.'); // pt-BR formatado -> float
+  }
+  const v = parseFloat(t);
+  return isNaN(v) ? 0 : v;
+}
+function formatNumberPt(v, decimals){
+  return v.toLocaleString('pt-BR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+function bindFormatted(id, stateKey, decimals, suffix, onAfter){
+  suffix = suffix || '';
+  const el = document.getElementById(id);
+  el.value = formatNumberPt(state[stateKey], decimals) + suffix;
+  el.addEventListener('focus', () => {
+    el.value = decimals > 0 ? String(state[stateKey]).replace('.', ',') : String(Math.round(state[stateKey]));
+    el.select();
+  });
+  el.addEventListener('input', () => {
+    state[stateKey] = parseFormattedNumber(el.value, decimals);
+    if (onAfter) onAfter();
+    scheduleRecalc();
+  });
+  el.addEventListener('blur', () => {
+    el.value = formatNumberPt(state[stateKey], decimals) + suffix;
+  });
+}
+
+bindFormatted('in-taxa-real', 'taxaReal', 1, '%');
+bindFormatted('in-inflacao', 'inflacao', 1, '%');
+bindFormatted('in-cambio', 'cambio', 2);
+bindFormatted('in-renda-minima', 'rendaMinima', 0);
+bindFormatted('in-renda-objetivo', 'rendaObjetivo', 0);
+bindFormatted('in-renda-ideal', 'rendaIdeal', 0);
+bindFormatted('in-carteira-xp', 'carteiraXP', 0);
+bindFormatted('in-galpao-valor', 'galpaoValor', 0);
+bindFormatted('in-galpao-renda', 'galpaoRendaMensal', 0);
+bindFormatted('in-galpao-vacancia', 'galpaoVacancia', 1, '%');
+bindFormatted('in-galpao-iptu', 'galpaoIPTU', 0);
+bindFormatted('in-paris-valor', 'parisValorEUR', 0);
+bindFormatted('in-paris-custo', 'parisCustoFixoEUR', 0);
+bindFormatted('in-paris-renda-alugado', 'parisRendaAlugadoEUR', 0);
+bindFormatted('in-ubatuba-valor', 'ubatubaValor', 0);
+bindFormatted('in-ubatuba-renda', 'ubatubaRendaAnual', 0);
+bindFormatted('in-ubatuba-custos', 'ubatubaCustosMensais', 0);
+bindNumber('in-mes-reforma', 'ubatubaMesReforma');
+bindFormatted('in-ap-valor', 'apValorAtual', 0);
+bindFormatted('in-ap-valor-novo', 'apValorNovo', 0);
+
+/* slider + campo de texto sincronizados nos dois sentidos, com formatação onBlur */
+function bindSlider(sliderId, textId, stateKey, min, max){
+  const slider = document.getElementById(sliderId);
+  const text = document.getElementById(textId);
+  text.value = formatNumberPt(state[stateKey], 0);
+  slider.addEventListener('input', () => {
+    state[stateKey] = parseFloat(slider.value) || 0;
+    text.value = formatNumberPt(state[stateKey], 0);
+    scheduleRecalc();
+  });
+  text.addEventListener('focus', () => {
+    text.value = String(Math.round(state[stateKey]));
+    text.select();
+  });
+  text.addEventListener('input', () => {
+    const v = parseFormattedNumber(text.value, 0);
+    state[stateKey] = v;
+    if (v >= min && v <= max) slider.value = v;
+    scheduleRecalc();
+  });
+  text.addEventListener('blur', () => {
+    // reconcilia o campo com o limite do slider (a simulação usa o valor real, sem limite)
+    text.value = formatNumberPt(state[stateKey], 0);
+  });
+}
+bindSlider('slider-capex', 'in-capex-text', 'ubatubaCapex', 0, 1200000);
+bindSlider('slider-paris-meses', 'in-paris-meses', 'parisMesesAlugados', 0, 12);
+</script>
+<script>
+/* ======================================================================
+   RENDER — Banner de veredicto
+   ====================================================================== */
+function bannerStatus(pres, depl, min, obj){
+  // depl >= pres sempre (depletar permite renda maior do que preservar)
+  if (pres >= obj && depl >= obj) return 'b-verde';
+  if (pres < obj && depl >= obj) return 'b-amarelo';
+  if (depl >= min && depl < obj) return 'b-laranja';
+  return 'b-vermelho';
+}
+function renderBanner(r, s){
+  const el = document.getElementById('banner-veredicto');
+  const status = bannerStatus(r.rendaSustPres, r.rendaSustDepl, s.rendaMinima, s.rendaObjetivo);
+  el.className = 'banner ' + status;
+  el.innerHTML =
+    '<div class="banner-row">Renda sustentável preservando o patrimônio: <span class="v">' + fmtBRL(r.rendaSustPres) + '/mês</span></div>' +
+    '<div class="banner-row">Renda sustentável até os 100 anos: <span class="v">' + fmtBRL(r.rendaSustDepl) + '/mês</span></div>' +
+    '<div class="banner-sub">Com as decisões e premissas atuais. Ajuste os parâmetros para simular cenários.</div>';
+}
+
+/* ======================================================================
+   RENDER — Bloco A: Composição do CFI
+   ====================================================================== */
+function renderBlocoA(r, s){
+  const b = r.cfiB;
+  let html = '';
+  html += row('Carteira XP', s.carteiraXP);
+  html += row('(+) Valores a receber', b.totalRecebiveis);
+  html += row('(−) Valores a pagar', -b.totalPagamentos);
+  if (b.conversaoAtivos !== 0) html += row('(+) Conversão de ativos vendidos', b.conversaoAtivos);
+  if (b.trocaAp !== 0) html += row('(±) Troca de apartamento', b.trocaAp);
+  html += rowSub('Capital disponível antes da reforma', b.capitalAntesReforma);
+  html += row('(−) Capex da reforma de Ubatuba (mês ' + s.ubatubaMesReforma + ')', -s.ubatubaCapex);
+  html += rowFinal('Capital financeiro líquido', b.capitalLiquido);
+  html += '<div class="field-note" style="margin-top:8px;">É este valor — após o capex da reforma — que o modo Preservação mantém ao longo do tempo (ver gráfico na aba Projeção Anual).</div>';
+  document.getElementById('bloco-a').innerHTML = html;
+
+  function row(label, val){
+    const neg = val < 0;
+    return '<div class="breakdown-row"><span class="lbl">' + label + '</span><span class="val' + (neg?' negative':'') + '">' + fmtBRL(val) + '</span></div>';
+  }
+  function rowSub(label, val){
+    return '<div class="breakdown-row subtotal"><span class="lbl">' + label + '</span><span class="val">' + fmtBRL(val) + '</span></div>';
+  }
+  function rowFinal(label, val){
+    return '<div class="breakdown-row final"><span class="lbl">' + label + '</span><span class="val">' + fmtBRL(val) + '</span></div>';
+  }
+}
+
+/* ======================================================================
+   RENDER — Bloco B: Sustentabilidade da renda
+   ====================================================================== */
+function renderBlocoB(r, s){
+  const metas = [
+    { nome:'Mínimo', valor: s.rendaMinima, key:'minima' },
+    { nome:'Objetivo', valor: s.rendaObjetivo, key:'objetivo' },
+    { nome:'Máxima', valor: s.rendaIdeal, key:'ideal' }
+  ];
+
+  // --- Subseção 2: renda possível (2 cards — Preservação / Depleção) ---
+  function cardPossivel(nome, subtitulo, sustentavel){
+    const resgateMaximo = Math.max(0, sustentavel - r.rendaImoveisMensal);
+    return '<div class="property-card">' +
+      '<h3>' + nome + '</h3><div class="loc">' + subtitulo + '</div>' +
+      '<div class="yield-value">' + fmtBRL(sustentavel) + '/mês</div>' +
+      '<div class="row"><span>Renda de imóveis</span><b>' + fmtBRL(r.rendaImoveisMensal) + '</b></div>' +
+      '<div class="row"><span>Resgate máximo (XP)</span><b>' + fmtBRL(resgateMaximo) + '</b></div>' +
+    '</div>';
+  }
+  const cardsPossivel =
+    cardPossivel('Preservação', 'Patrimônio mantido ao longo do tempo', r.rendaSustPres) +
+    cardPossivel('Depleção', 'Capital utilizado até os 100 anos', r.rendaSustDepl);
+
+  // --- Subseção 3: as metas de renda são possíveis? (3 cards) ---
+  function cardMeta(m){
+    const v = r.metaViabilidade[m.key];
+    let statusHtml;
+    if (v.achievable){
+      statusHtml = '<div class="badge verde">✓ Dentro do possível — sustenta até os 100 anos</div>';
+    } else {
+      statusHtml = '<div class="badge vermelho">✗ Patrimônio se esgota aos ' + v.idadeExaustao.anos + ' anos (' + (100 - v.idadeExaustao.anos) + ' anos antes dos 100)</div>';
+    }
+    return '<div class="property-card">' +
+      '<h3>' + m.nome + '</h3><div class="loc">' + fmtBRL(m.valor) + '/mês</div>' +
+      '<div class="row"><span>Resgate necessário (XP)</span><b>' + fmtBRL(v.resgateNecessario) + '/mês</b></div>' +
+      statusHtml +
+    '</div>';
+  }
+  const cardsMetas = metas.map(cardMeta).join('');
+
+  document.getElementById('bloco-b').innerHTML =
+    '<div class="subsection-label-result">Composição da renda de imóveis</div>' +
+    '<div id="bloco-b-composicao"></div>' +
+    '<div class="subsection-label-result">Renda possível (imóveis + resgate máximo da XP)</div>' +
+    '<div class="property-cards">' + cardsPossivel + '</div>' +
+    '<div class="subsection-label-result">As metas de renda são possíveis?</div>' +
+    '<div class="property-cards">' + cardsMetas + '</div>' +
+    '<div class="capex-title-note">"Resgate necessário" é o valor que precisaria sair da carteira de investimentos por mês para atingir aquela meta de renda total, já descontada a renda de imóveis. A viabilidade acima testa se o patrimônio (imóveis + XP) sustenta essa retirada até os 100 anos de idade.</div>';
+
+  // o innerHTML acima recria #bloco-b-composicao; renderiza agora que existe no DOM
+  renderComposicaoImoveis(r, s, 'bloco-b-composicao');
+}
+
+/* ======================================================================
+   RENDER — Premissas e decisões (bloco exclusivo do PDF/impressão)
+   ====================================================================== */
+function renderPrintPremises(r, s){
+  const parts = [];
+  parts.push('Rentabilidade real: <b>' + fmtPct1(s.taxaReal) + ' a.a.</b> &nbsp;·&nbsp; Inflação: <b>' + fmtPct1(s.inflacao) + ' a.a.</b> &nbsp;·&nbsp; Câmbio EUR/BRL: <b>' + s.cambio.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + '</b>');
+
+  if (s.galpaoDecisao === 'vender'){
+    parts.push('Galpão (Guarulhos): <b>Vender</b> — valor declarado ' + fmtBRL(s.galpaoValor));
+  } else {
+    parts.push('Galpão (Guarulhos): <b>Manter</b> — renda líquida ' + fmtBRL(s.galpaoRendaMensal) + '/mês (ocupado), vacância ' + fmtPct1(s.galpaoVacancia) + ', IPTU ' + fmtBRL(s.galpaoIPTU) + '/mês');
+  }
+
+  if (s.parisDecisao === 'vender'){
+    parts.push('Studio (Paris): <b>Vender</b> — valor declarado €' + s.parisValorEUR.toLocaleString('pt-BR'));
+  } else if (s.parisDecisao === 'manter'){
+    parts.push('Studio (Paris): <b>Manter sem alugar</b> — custo fixo €' + s.parisCustoFixoEUR.toLocaleString('pt-BR') + '/ano');
+  } else {
+    parts.push('Studio (Paris): <b>Manter e alugar</b> — custo fixo €' + s.parisCustoFixoEUR.toLocaleString('pt-BR') + '/ano, aluguel líquido €' + s.parisRendaAlugadoEUR.toLocaleString('pt-BR') + '/mês por ' + s.parisMesesAlugados + ' meses/ano');
+  }
+
+  let ubatubaTxt = 'Casa (Ubatuba): renda de temporada ' + fmtBRL(s.ubatubaRendaAnual) + '/ano';
+  if (s.ubatubaCapex > 0) ubatubaTxt += ', reforma de <b>' + fmtBRL(s.ubatubaCapex) + '</b> no mês ' + s.ubatubaMesReforma;
+  else ubatubaTxt += ', sem reforma prevista';
+  parts.push(ubatubaTxt);
+
+  if (s.apDecisao === 'substituir'){
+    parts.push('Apartamento (SP): <b>Substituir</b> — valor atual ' + fmtBRL(s.apValorAtual) + ' por novo imóvel de ' + fmtBRL(s.apValorNovo));
+  } else {
+    parts.push('Apartamento (SP): <b>Manter</b> — valor ' + fmtBRL(s.apValorAtual));
+  }
+
+  document.getElementById('print-premissas').innerHTML = parts.map(p => '<div class="print-premissa-item">' + p + '</div>').join('');
+}
+
+/* ======================================================================
+   RENDER — Bloco C: Capex máximo
+   ====================================================================== */
+function renderBlocoC(r, s){
+  const metas = [
+    { nome:'Mínimo', valor: s.rendaMinima, key:'minima' },
+    { nome:'Objetivo', valor: s.rendaObjetivo, key:'objetivo', highlight:true },
+    { nome:'Máxima', valor: s.rendaIdeal, key:'ideal' }
+  ];
+  let rows = metas.map(m => {
+    const maxPres = r.capexMax[m.key].preservacao;
+    const maxDepl = r.capexMax[m.key]['depleção'];
+    const dotPres = s.ubatubaCapex <= maxPres ? 'green' : 'red';
+    const dotDepl = s.ubatubaCapex <= maxDepl ? 'green' : 'red';
+    return '<tr' + (m.highlight?' class="obj-row"':'') + '>' +
+      '<td>' + m.nome + ' — ' + fmtBRL(m.valor) + '/mês</td>' +
+      '<td>' + fmtBRL(maxPres) + '<span class="indicator-dot ' + dotPres + '"></span></td>' +
+      '<td>' + fmtBRL(maxDepl) + '<span class="indicator-dot ' + dotDepl + '"></span></td>' +
+    '</tr>';
+  }).join('');
+
+  const html =
+    '<table class="capex-table"><thead><tr><th>Meta de renda</th><th>Capex máx. preservando capital</th><th>Capex máx. até os 100 anos</th></tr></thead>' +
+    '<tbody>' + rows + '</tbody></table>' +
+    '<div class="capex-title-note">Calculado com base nas premissas atuais. Qualquer alteração nas premissas atualiza automaticamente este teto.</div>';
+  document.getElementById('bloco-c').innerHTML = html;
+
+  const delta = r.rendaSustPresSemCapex - r.rendaSustPres;
+  document.getElementById('feedback-capex').innerHTML =
+    'Com a reforma de <b>' + fmtBRL(s.ubatubaCapex) + '</b> no mês ' + s.ubatubaMesReforma +
+    ', a renda sustentável (preservação) cai <b>' + fmtBRL(delta) + '/mês</b> em relação a não reformar.';
+}
+
+/* ======================================================================
+   RENDER — Bloco D: Cards de rentabilidade
+   ====================================================================== */
+function renderBlocoD(r, s){
+  const cards = [];
+  if (r.galpao.ativo){
+    cards.push(propertyCard('Galpão', 'Guarulhos', s.galpaoValor, r.galpao.rendaLiquidaAnual, r.galpao.yieldAnual, r.taxas.taxaRealAnual));
+  }
+  cards.push(propertyCard('Casa', 'Ubatuba', s.ubatubaValor, r.ubatuba.rendaLiquidaAnual, r.ubatuba.yieldAnual, r.taxas.taxaRealAnual));
+  if (r.paris.ativo){
+    cards.push(propertyCard('Studio', 'Paris', s.parisValorEUR * s.cambio, r.paris.rendaLiquidaAnual, r.paris.yieldAnual, r.taxas.taxaRealAnual, true));
+  }
+  document.getElementById('bloco-d').innerHTML = '<div class="property-cards">' + cards.join('') + '</div>';
+
+  function propertyCard(nome, loc, valor, rendaAnual, yieldVal, taxaReal, isParis){
+    const badge = badgeFor(yieldVal, taxaReal);
+    const yieldDisplay = yieldVal === null ? '—' : fmtPct1(yieldVal*100);
+    return '<div class="property-card">' +
+      '<h3>' + nome + '</h3><div class="loc">' + loc + '</div>' +
+      '<div class="row"><span>Valor declarado</span><b>' + fmtBRL(valor) + '</b></div>' +
+      '<div class="row"><span>Renda líquida anual</span><b class="' + (rendaAnual<0?'neg':'') + '">' + fmtBRL(rendaAnual) + '</b></div>' +
+      '<div class="yield-value">' + yieldDisplay + '</div>' +
+      '<div class="badge ' + badge.cls + '">' + badge.label + ' (vs. ' + fmtPct1(taxaReal*100) + ' das aplicações)</div>' +
+    '</div>';
+  }
+}
+
+/* ======================================================================
+   RENDER — Bloco E: Rentabilidade Necessária
+   ====================================================================== */
+function renderBlocoE(r, s){
+  const metas = [
+    { nome:'Mínimo', valor: s.rendaMinima, key:'minima' },
+    { nome:'Objetivo', valor: s.rendaObjetivo, key:'objetivo', highlight:true },
+    { nome:'Máxima', valor: s.rendaIdeal, key:'ideal' }
+  ];
+
+  function celulaTaxa(resultado){
+    if (resultado.status === 'inatingivel'){
+      return '<span class="neg">Inatingível (> 25% a.a.)</span><span class="indicator-dot red"></span>';
+    }
+    const dot = resultado.taxa <= s.taxaReal ? 'green' : 'red';
+    const texto = resultado.status === 'piso' ? '< -10% a.a.' : fmtPct1(resultado.taxa) + ' a.a.';
+    return texto + '<span class="indicator-dot ' + dot + '"></span>';
+  }
+
+  let rows = metas.map(m => {
+    const tp = r.taxaNecessaria[m.key].preservacao;
+    const td = r.taxaNecessaria[m.key]['depleção'];
+    return '<tr' + (m.highlight?' class="obj-row"':'') + '>' +
+      '<td>' + m.nome + ' — ' + fmtBRL(m.valor) + '/mês</td>' +
+      '<td>' + celulaTaxa(tp) + '</td>' +
+      '<td>' + celulaTaxa(td) + '</td>' +
+    '</tr>';
+  }).join('');
+
+  const intro = '<div class="field-note" style="margin-bottom:10px;">Rentabilidade real líquida de IR que <b>a carteira XP</b> precisaria entregar para subsidiar cada nível de renda. As metas de renda mínima, objetivo e máxima abaixo são o valor <b>total</b> que a cliente recebe por mês — já somando a renda gerada pelos imóveis mantidos (' + fmtBRL(r.rendaImoveisMensal) + '/mês) com o que precisa ser resgatado da XP.</div>';
+
+  const html =
+    intro +
+    '<table class="capex-table"><thead><tr><th>Meta de renda total</th><th>Rentabilidade XP necessária — Preservação</th><th>Rentabilidade XP necessária — Depleção</th></tr></thead>' +
+    '<tbody>' + rows + '</tbody></table>' +
+    '<div class="capex-title-note">Calculado mantendo fixos o capex da reforma (' + fmtBRL(s.ubatubaCapex) + ') e as demais premissas — varia apenas a rentabilidade. Compara com a premissa atual de ' + fmtPct1(s.taxaReal) + ' a.a. (indicador verde = atingível na premissa atual; vermelho = exigiria retorno maior).</div>';
+  document.getElementById('bloco-e').innerHTML = html;
+}
+
+/* ======================================================================
+   RENDER — Composição da "Renda de Imóveis" (aba Mensal)
+   ====================================================================== */
+function renderComposicaoImoveis(r, s, targetId){
+  let html = '';
+  if (r.galpao.ativo){
+    html += row('Galpão (Guarulhos)', r.galpao.rendaMensalMedia);
+  } else {
+    html += rowMuted('Galpão (Guarulhos)', 'vendido — não contribui');
+  }
+  html += row('Casa (Ubatuba)', r.ubatuba.rendaMensalMedia);
+  if (r.paris.ativo){
+    const labelParis = s.parisDecisao === 'manter' ? 'Studio (Paris) — custo fixo, sem locação' : 'Studio (Paris) — aluguel líquido';
+    html += row(labelParis, r.paris.rendaMensalMedia);
+  } else {
+    html += rowMuted('Studio (Paris)', 'vendido — não contribui');
+  }
+  html += rowFinal('Total — renda de imóveis', r.rendaImoveisMensal);
+  if (s.inflacao > 0){
+    html += '<div class="field-note" style="margin-top:6px;">Com inflação de ' + fmtPct1(s.inflacao) + ' ao ano, este total cresce mês a mês nas tabelas. Os valores acima estão em termos de hoje (mês 1).</div>';
+  }
+  document.getElementById(targetId).innerHTML = html;
+
+  function row(label, val){
+    const neg = val < 0;
+    return '<div class="breakdown-row"><span class="lbl">' + label + '</span><span class="val' + (neg?' negative':'') + '">' + fmtBRL(val) + '/mês</span></div>';
+  }
+  function rowMuted(label, note){
+    return '<div class="breakdown-row"><span class="lbl">' + label + '</span><span class="val" style="color:var(--text-sec);font-style:italic;">' + note + '</span></div>';
+  }
+  function rowFinal(label, val){
+    return '<div class="breakdown-row final"><span class="lbl">' + label + '</span><span class="val">' + fmtBRL(val) + '/mês</span></div>';
+  }
+}
+</script>
+<script>
+/* ======================================================================
+   GRÁFICOS — Chart.js (usado apenas na aba Projeção Anual; o gráfico do
+   Resumo foi removido por redundância — ver bloco de Rentabilidade
+   Necessária no lugar do antigo Bloco E)
+   ====================================================================== */
+let chartAnual = null;
+
+// Plugin customizado: zona de risco sombreada logo abaixo de y=0
+const riskZonePlugin = {
+  id: 'riskZone',
+  beforeDraw(chart){
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea || !scales.y) return;
+    const yZero = scales.y.getPixelForValue(0);
+    const yBottom = chartArea.bottom;
+    if (yZero >= yBottom) return;
+    ctx.save();
+    ctx.fillStyle = 'rgba(185,28,28,0.07)';
+    ctx.fillRect(chartArea.left, yZero, chartArea.right - chartArea.left, yBottom - yZero);
+    ctx.restore();
+  }
+};
+if (window.Chart) Chart.register(riskZonePlugin);
+
+function buildYearlySeries(capitalArr){
+  const out = [];
+  for (let ano = 0; ano <= 31; ano++) out.push(capitalArr[ano*12]);
+  return out;
+}
+function ageLabels(){
+  const out = [];
+  for (let i = 0; i <= 31; i++) out.push(69 + i);
+  return out;
+}
+function findExhaustionYearIndex(yearlyArr){
+  // Não considera o último ponto (ano 31 / 100 anos) como "exaustão prematura":
+  // chegar a zero exatamente no fim do horizonte é o resultado esperado do modo Depleção.
+  for (let i = 0; i < yearlyArr.length - 1; i++){
+    if (yearlyArr[i] <= 0.5) return i;
+  }
+  return -1;
+}
+
+function pointStyleForExhaustion(yearlyArr, exhaustIdx){
+  return yearlyArr.map((v,i) => i === exhaustIdx ? 6 : 0);
+}
+function pointColorForExhaustion(yearlyArr, exhaustIdx, baseColor){
+  return yearlyArr.map((v,i) => i === exhaustIdx ? '#B91C1C' : baseColor);
+}
+
+function chartOptions(xLabel, r, s, exPres, exDepl){
+  return {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { position: 'bottom', labels: { font:{family:'Inter',size:11}, color:'#6B7280', usePointStyle:true } },
+      tooltip: {
+        callbacks: {
+          label: function(ctx){
+            let label = ctx.dataset.label + ': ' + fmtBRLCompact(ctx.parsed.y);
+            const idx = ctx.dataIndex;
+            if (ctx.dataset.label === 'Preservação' && idx === exPres && exPres >= 0){
+              label += '  (patrimônio esgotado aos ' + (69+exPres) + ' anos)';
+            }
+            if (ctx.dataset.label === 'Depleção' && idx === exDepl && exDepl >= 0){
+              label += '  (patrimônio esgotado aos ' + (69+exDepl) + ' anos)';
+            }
+            return label;
+          }
+        }
+      }
+    },
+    scales: {
+      x: { title: { display:true, text:xLabel, color:'#6B7280', font:{size:11} }, grid:{ display:false }, ticks:{ font:{size:10}, color:'#6B7280', maxTicksLimit:16 } },
+      y: { title: { display:true, text:'Capital financeiro (R$)', color:'#6B7280', font:{size:11} },
+           ticks:{ callback: v => fmtBRLCompact(v), font:{size:10}, color:'#6B7280' },
+           grid:{ color:'#E0E4EA' } }
+    }
+  };
+}
+
+function renderChartAnual(r, s){
+  const labels = ageLabels();
+  const presYearly = buildYearlySeries(r.simPres.capital);
+  const deplYearly = buildYearlySeries(r.simDepl.capital);
+  const exPres = findExhaustionYearIndex(presYearly);
+  const exDepl = findExhaustionYearIndex(deplYearly);
+  const showTotal = document.getElementById('chk-patrimonio-total').checked;
+
+  const datasets = [
+    { label:'Preservação', data: presYearly, borderColor:'#1B3A6B', backgroundColor:'#1B3A6B',
+      pointRadius: pointStyleForExhaustion(presYearly, exPres), pointBackgroundColor: pointColorForExhaustion(presYearly, exPres,'#1B3A6B'),
+      borderWidth:2.5, tension:0.15, fill:false },
+    { label:'Depleção', data: deplYearly, borderColor:'#C2410C', backgroundColor:'#C2410C',
+      pointRadius: pointStyleForExhaustion(deplYearly, exDepl), pointBackgroundColor: pointColorForExhaustion(deplYearly, exDepl,'#C2410C'),
+      borderWidth:2.5, tension:0.15, fill:false },
+    { label:'CFI inicial', data: labels.map(()=>r.cfi), borderColor:'#9CA3AF', borderDash:[6,5], borderWidth:1.5, pointRadius:0, fill:false }
+  ];
+  if (showTotal){
+    const totalYearly = presYearly.map(v => v + r.valorImoveisMantidos);
+    datasets.push({ label:'Patrimônio total (Preservação + imóveis)', data: totalYearly, borderColor:'#142C52', borderDash:[2,3], borderWidth:2, pointRadius:0, fill:false });
+  }
+
+  const ctx = document.getElementById('chart-anual').getContext('2d');
+  if (chartAnual) chartAnual.destroy();
+  chartAnual = new Chart(ctx, { type:'line', data:{ labels, datasets }, options: chartOptions('Idade da cliente', r, s, exPres, exDepl) });
+
+  let alertHtml = '';
+  if (exDepl >= 0 && exDepl < 31){
+    alertHtml += '<div class="exhaustion-alert">Com as premissas atuais, no modo Depleção, o patrimônio se esgota aos ' + (69+exDepl) + ' anos — ' + (31-exDepl) + ' anos antes dos 100.</div>';
+  }
+  if (exPres >= 0 && exPres < 31){
+    alertHtml += '<div class="exhaustion-alert">Com as premissas atuais, no modo Preservação, o patrimônio se esgota aos ' + (69+exPres) + ' anos — ' + (31-exPres) + ' anos antes dos 100.</div>';
+  }
+  document.getElementById('bloco-alerta-anual').innerHTML = alertHtml;
+}
+
+document.getElementById('chk-patrimonio-total').addEventListener('change', () => renderChartAnual(lastResult, state));
+</script>
+<script>
+/* ======================================================================
+   TABELAS — Projeção Anual (31 linhas) e Mensal (372 linhas)
+   ====================================================================== */
+let modoAnual = 'preservacao';
+let modoMensal = 'preservacao';
+let lastResult = null;
+
+function periodoAno(ano){
+  // ano 1 = mês 1..12 = Jul/2026 .. Jun/2027
+  const inicio = dataDoMes((ano-1)*12 + 1);
+  const fim = dataDoMes((ano-1)*12 + 12);
+  return inicio + ' – ' + fim;
+}
+
+function renderTabelaAnual(r, s){
+  const sim = modoAnual === 'preservacao' ? r.simPres : r.simDepl;
+  const regs = sim.registros;
+  let rowsHtml = '';
+  for (let ano = 1; ano <= 31; ano++){
+    const inicioIdx = (ano-1)*12;     // índice do 1º mês do ano nos registros (0-based)
+    const fimIdx = ano*12 - 1;        // índice do 12º mês do ano
+    const capitalInicial = regs[inicioIdx].capitalInicial;
+    let rendimento = 0, rendaImoveis = 0, retirada = 0, capex = 0;
+    for (let i = inicioIdx; i <= fimIdx; i++){
+      rendimento += regs[i].rendimento;
+      rendaImoveis += regs[i].rendaImoveis;
+      retirada += regs[i].retirada;
+      capex += regs[i].capex;
+    }
+    const saldoFinal = regs[fimIdx].capitalFinal;
+    const idade = 68 + ano;
+    const temCapex = capex > 0;
+    const esgotado = saldoFinal <= 0.5;
+    let cls = '';
+    if (temCapex) cls = 'row-capex';
+    if (esgotado) cls = 'row-critical';
+    rowsHtml +=
+      '<tr class="' + cls + '">' +
+        '<td>' + ano + '</td>' +
+        '<td>' + periodoAno(ano) + '</td>' +
+        '<td>' + idade + ' anos</td>' +
+        '<td>' + fmtBRL(capitalInicial) + '</td>' +
+        '<td>' + fmtBRL(rendimento) + '</td>' +
+        '<td>' + fmtBRLSigned(rendaImoveis) + '</td>' +
+        '<td>' + fmtBRL(retirada) + '</td>' +
+        '<td>' + (temCapex ? fmtBRL(capex) : '—') + '</td>' +
+        '<td>' + (esgotado ? '<span class="esgotado-tag">Patrimônio esgotado</span>' : fmtBRL(saldoFinal)) + '</td>' +
+      '</tr>';
+  }
+  document.getElementById('tbody-anual').innerHTML = rowsHtml;
+}
+
+function populaFiltroAno(){
+  const sel = document.getElementById('filtro-ano-mensal');
+  if (sel.options.length > 0) return; // já populado
+  let html = '<option value="todos">Todos os meses</option>';
+  for (let ano = 1; ano <= 31; ano++){
+    html += '<option value="' + ano + '">Ano ' + ano + ' (' + periodoAno(ano) + ')</option>';
+  }
+  sel.innerHTML = html;
+}
+
+function renderTabelaMensal(r, s){
+  const sim = modoMensal === 'preservacao' ? r.simPres : r.simDepl;
+  const regs = sim.registros;
+  const filtro = document.getElementById('filtro-ano-mensal').value || 'todos';
+  let iniM = 1, fimM = 372;
+  if (filtro !== 'todos'){
+    const ano = parseInt(filtro, 10);
+    iniM = (ano-1)*12 + 1;
+    fimM = ano*12;
+  }
+  let rowsHtml = '';
+  for (let m = iniM; m <= fimM; m++){
+    const reg = regs[m-1];
+    const idade = idadeNoMes(m);
+    const esgotado = reg.capitalFinal <= 0.5;
+    const temCapex = reg.capex > 0;
+    let cls = '';
+    if (temCapex) cls = 'row-capex';
+    if (esgotado) cls = 'row-critical';
+    rowsHtml +=
+      '<tr class="' + cls + '">' +
+        '<td>' + m + '</td>' +
+        '<td>' + dataDoMes(m) + '</td>' +
+        '<td>' + idade.anos + ' anos e ' + idade.meses + ' meses</td>' +
+        '<td>' + fmtBRL(reg.capitalInicial) + '</td>' +
+        '<td>' + fmtBRL(reg.rendimento) + '</td>' +
+        '<td>' + fmtBRLSigned(reg.rendaImoveis) + '</td>' +
+        '<td>' + fmtBRL(reg.retirada) + '</td>' +
+        '<td>' + (temCapex ? fmtBRL(reg.capex) : '—') + '</td>' +
+        '<td>' + (esgotado ? '<span class="esgotado-tag">Patrimônio esgotado</span>' : fmtBRL(reg.capitalFinal)) + '</td>' +
+      '</tr>';
+  }
+  document.getElementById('tbody-mensal').innerHTML = rowsHtml;
+}
+
+wireToggle('toggle-modo-anual', v => { modoAnual = v; renderTabelaAnual(lastResult, state); });
+wireToggle('toggle-modo-mensal', v => { modoMensal = v; renderTabelaMensal(lastResult, state); });
+document.getElementById('filtro-ano-mensal').addEventListener('change', () => renderTabelaMensal(lastResult, state));
+</script>
+<script>
+/* ======================================================================
+   ORQUESTRAÇÃO — recálculo reativo (coalescido via requestAnimationFrame)
+   ====================================================================== */
+let _recalcScheduled = false;
+function scheduleRecalc(){
+  if (_recalcScheduled) return;
+  _recalcScheduled = true;
+  requestAnimationFrame(() => {
+    _recalcScheduled = false;
+    recalcAndRenderAll();
+  });
+}
+
+function recalcAndRenderAll(){
+  const r = computeAll(state);
+  lastResult = r;
+  renderBanner(r, state);
+  renderPrintPremises(r, state);
+  renderBlocoA(r, state);
+  renderBlocoB(r, state);
+  renderBlocoC(r, state);
+  renderBlocoD(r, state);
+  renderComposicaoImoveis(r, state, 'bloco-composicao-imoveis');
+  renderBlocoE(r, state);
+  renderChartAnual(r, state);
+  renderTabelaAnual(r, state);
+  renderTabelaMensal(r, state);
+}
+
+/* ======================================================================
+   TABS
+   ====================================================================== */
+function switchTab(tabName){
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector('.tab-btn[data-tab="' + tabName + '"]').classList.add('active');
+  document.getElementById('tab-' + tabName).classList.add('active');
+}
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab')));
+});
+
+/* ======================================================================
+   BAIXAR RESUMO EM PDF — usa a impressão nativa do navegador (Salvar como
+   PDF), restrita via @media print à aba Resumo, compactada para 1 página A4.
+   ====================================================================== */
+function baixarResumoPDF(){
+  switchTab('resumo');
+  renderPrintPremises(lastResult, state);
+  window.print();
+}
+
+/* ======================================================================
+   INIT
+   ====================================================================== */
+function init(){
+  renderDynTable('recebiveis', 'tbody-recebiveis', 'total-recebiveis');
+  renderDynTable('pagamentos', 'tbody-pagamentos', 'total-pagamentos');
+  populaFiltroAno();
+  recalcAndRenderAll();
+}
+init();
+</script>
+</body>
+</html>
